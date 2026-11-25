@@ -59,11 +59,14 @@ def save_checkpoint(path: str, state_dict: dict, meta: dict) -> None:
 
 
 def fit(model, train_loader, val_loader, device, lr: float, max_epochs: int = 15,
-        patience: int = 3, ckpt_path: str | None = None, ckpt_meta: dict | None = None) -> dict:
+        patience: int = 3, ckpt_path: str | None = None, ckpt_meta: dict | None = None,
+        state_path: str | None = None) -> dict:
     """Adam + cross-entropy, early stopping on validation loss.
 
     The weights of the best epoch (lowest validation loss) are restored at the end
     and, if ``ckpt_path`` is given, saved together with ``ckpt_meta``.
+    If ``state_path`` is given, the full training state is saved after every epoch and an
+    interrupted run (a Colab disconnect, say) resumes from its last finished epoch.
     """
     torch.backends.cudnn.benchmark = device.type == "cuda"  # input size is fixed, so let cuDNN pick kernels
     criterion = nn.CrossEntropyLoss()
@@ -71,15 +74,28 @@ def fit(model, train_loader, val_loader, device, lr: float, max_epochs: int = 15
     scaler = torch.amp.GradScaler(device.type, enabled=device.type == "cuda")
 
     history, best_state = [], None
-    best_loss, best_epoch, waited = float("inf"), 0, 0
+    best_loss, best_epoch, waited, stopped = float("inf"), 0, 0, False
+    first_epoch, earlier_s = 1, 0.0
+    if state_path and os.path.exists(state_path):
+        s = torch.load(state_path, map_location="cpu", weights_only=False)
+        model.load_state_dict(s["model"])
+        optimizer.load_state_dict(s["optimizer"])
+        scaler.load_state_dict(s["scaler"])
+        history, best_state = s["history"], s["best_state"]
+        best_loss, best_epoch, waited, stopped = s["best_loss"], s["best_epoch"], s["waited"], s["stopped"]
+        first_epoch, earlier_s = s["epoch"] + 1, s["elapsed_s"]
+        print(f"resuming after epoch {s['epoch']} ({earlier_s / 60:.1f} min of training so far)")
+
     start = time.perf_counter()
-    for epoch in range(1, max_epochs + 1):
+    for epoch in range(first_epoch, max_epochs + 1):
+        if stopped:
+            break
         tr_loss, tr_acc = _run_epoch(model, train_loader, criterion, device, optimizer, scaler,
                                      desc=f"epoch {epoch} train")
         va_loss, va_acc = _run_epoch(model, val_loader, criterion, device, desc=f"epoch {epoch} val")
+        elapsed_s = earlier_s + time.perf_counter() - start
         history.append({"epoch": epoch, "train_loss": tr_loss, "train_acc": tr_acc,
-                        "val_loss": va_loss, "val_acc": va_acc,
-                        "elapsed_min": (time.perf_counter() - start) / 60})
+                        "val_loss": va_loss, "val_acc": va_acc, "elapsed_min": elapsed_s / 60})
         print(f"epoch {epoch:2d} | train loss {tr_loss:.4f} acc {tr_acc:.4f} "
               f"| val loss {va_loss:.4f} acc {va_acc:.4f}")
 
@@ -92,9 +108,17 @@ def fit(model, train_loader, val_loader, device, lr: float, max_epochs: int = 15
             waited += 1
             if waited >= patience:
                 print(f"early stopping: validation loss did not improve for {patience} epochs")
-                break
+                stopped = True
+        if state_path:
+            os.makedirs(os.path.dirname(state_path) or ".", exist_ok=True)
+            torch.save({"model": model.state_dict(), "optimizer": optimizer.state_dict(),
+                        "scaler": scaler.state_dict(), "history": history, "best_state": best_state,
+                        "best_loss": best_loss, "best_epoch": best_epoch, "waited": waited,
+                        "stopped": stopped, "epoch": epoch, "elapsed_s": elapsed_s},
+                       state_path + ".tmp")
+            os.replace(state_path + ".tmp", state_path)  # never leave a half-written state
 
-    train_time_s = time.perf_counter() - start
+    train_time_s = earlier_s + time.perf_counter() - start
     model.load_state_dict(best_state)
     return {"history": history, "best_epoch": best_epoch, "epochs_run": len(history),
             "train_time_s": train_time_s}
