@@ -65,6 +65,7 @@ def fit(model, train_loader, val_loader, device, lr: float, max_epochs: int = 15
     The weights of the best epoch (lowest validation loss) are restored at the end
     and, if ``ckpt_path`` is given, saved together with ``ckpt_meta``.
     """
+    torch.backends.cudnn.benchmark = device.type == "cuda"  # input size is fixed, so let cuDNN pick kernels
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam([p for p in model.parameters() if p.requires_grad], lr=lr)
     scaler = torch.amp.GradScaler(device.type, enabled=device.type == "cuda")

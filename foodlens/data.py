@@ -73,22 +73,26 @@ class Food101Torch(Dataset):
 
 def make_loaders(train_split, val_split, test_split, batch_size: int, augment: bool = True,
                  num_workers: int = 2, eval_batch_size: int = 128):
-    """Train / val / test DataLoaders. Only the training loader shuffles and augments."""
+    """Train / val / test DataLoaders. Only the training loader shuffles and augments.
+
+    Evaluation needs fewer workers (no augmentation, larger batches), which keeps memory
+    use down when worker processes are spawned, as on Windows.
+    """
     pin = torch.cuda.is_available()
-    keep = num_workers > 0
+    eval_workers = min(4, num_workers)
     train_loader = DataLoader(
         Food101Torch(train_split, build_transforms(train=True, augment=augment)),
         batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=pin,
-        persistent_workers=keep, generator=torch.Generator().manual_seed(SEED),
+        persistent_workers=num_workers > 0, generator=torch.Generator().manual_seed(SEED),
     )
     eval_tf = build_transforms(train=False)
     val_loader = DataLoader(
         Food101Torch(val_split, eval_tf), batch_size=eval_batch_size, shuffle=False,
-        num_workers=num_workers, pin_memory=pin, persistent_workers=keep,
+        num_workers=eval_workers, pin_memory=pin, persistent_workers=eval_workers > 0,
     )
     test_loader = DataLoader(
         Food101Torch(test_split, eval_tf), batch_size=eval_batch_size, shuffle=False,
-        num_workers=num_workers, pin_memory=pin,
+        num_workers=eval_workers, pin_memory=pin,
     )
     return train_loader, val_loader, test_loader
 
