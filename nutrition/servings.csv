@@ -1,0 +1,125 @@
+dish,serving,fdc_id,grams,match
+apple_pie,1 slice,2707995,150,exact
+baby_back_ribs,Half rack (6 ribs),2705894,210,exact
+baklava,1 piece,2708044,80,exact
+beef_carpaccio,1 starter plate,2706394,100,closest
+beef_tartare,1 portion,2706394,169,exact
+beet_salad,1 side salad,2709875,175,composite
+beet_salad,1 side salad,2705716,21,composite
+beignets,3 beignets,2708071,135,exact
+bibimbap,1 bowl,2708950,405,exact
+bread_pudding,1 cup,2705680,200,exact
+breakfast_burrito,1 burrito,2707215,150,composite
+breakfast_burrito,1 burrito,2707824,71,composite
+breakfast_burrito,1 burrito,2705709,21,composite
+bruschetta,3 slices,2707652,129,exact
+caesar_salad,1 bowl with dressing,2709591,158,composite
+caesar_salad,1 bowl with dressing,2710199,29,composite
+cannoli,1 pastry,2708052,85,closest
+caprese_salad,1 plate,2705818,160,exact
+carrot_cake,1 slice,2707859,200,exact
+ceviche,1 cup,2706463,250,exact
+cheesecake,1 slice,2707861,175,exact
+cheese_plate,1 small plate with crackers,2705704,60,composite
+cheese_plate,1 small plate with crackers,2708132,30,composite
+chicken_curry,1 plate with rice,2706438,400,exact
+chicken_quesadilla,1 quesadilla,2708593,140,exact
+chicken_wings,6 pieces,2706068,165,exact
+chocolate_cake,1 slice,2707866,175,exact
+chocolate_mousse,1/2 cup,2705698,85,closest
+churros,3 churros,2708070,135,exact
+clam_chowder,1 bowl (1.5 cups),2707139,383,exact
+club_sandwich,1 sandwich,2706997,290,exact
+crab_cakes,2 crab cakes,2706549,170,exact
+creme_brulee,1 ramekin,2705684,130,exact
+croque_madame,1 sandwich with egg,2706965,135,composite
+croque_madame,1 sandwich with egg,2707159,55,composite
+cup_cakes,1 cupcake,2707853,90,exact
+deviled_eggs,4 halves,2707181,120,exact
+donuts,1 doughnut,2708062,75,exact
+dumplings,6 dumplings,2708708,150,exact
+edamame,1 cup,2707436,160,exact
+eggs_benedict,2 eggs,2707180,310,exact
+escargots,6 snails with butter,2706368,30,composite
+escargots,6 snails with butter,2710154,14,composite
+falafel,6 balls,2707408,102,exact
+filet_mignon,1 steak,2705841,160,exact
+fish_and_chips,1 plate,2706227,135,composite
+fish_and_chips,1 plate,2709462,145,composite
+foie_gras,1 portion,2706155,60,closest
+french_fries,1 medium order,2709462,145,exact
+french_onion_soup,1 bowl with bread and cheese,2710108,368,composite
+french_onion_soup,1 bowl with bread and cheese,2707610,32,composite
+french_onion_soup,1 bowl with bread and cheese,2705735,28,composite
+french_toast,2 slices,2708335,130,exact
+fried_calamari,1 cup,2706334,135,exact
+fried_rice,1 plate (1.5 cups),2708952,297,exact
+frozen_yogurt,1 small cup,2705451,160,exact
+garlic_bread,2 slices,2707627,148,exact
+gnocchi,1 plate with sauce,2708722,188,composite
+gnocchi,1 plate with sauce,2709745,130,composite
+greek_salad,1 bowl with olive oil,2709830,210,composite
+greek_salad,1 bowl with olive oil,2710186,14,composite
+grilled_cheese_sandwich,1 sandwich,2705801,116,exact
+grilled_salmon,1 fillet,2706287,140,exact
+guacamole,1/2 cup with chips,2709307,120,composite
+guacamole,1/2 cup with chips,2708202,28,composite
+gyoza,6 pieces,2708705,150,exact
+hamburger,1 burger,2706920,145,exact
+hot_and_sour_soup,1 bowl (1.5 cups),2707136,368,exact
+hot_dog,1 hot dog,2707056,102,exact
+huevos_rancheros,1 plate (2 eggs),2707191,236,exact
+hummus,1/2 cup,2707402,120,exact
+ice_cream,1 small cup,2705629,120,exact
+lasagna,1 piece,2708750,232,exact
+lobster_bisque,1 bowl (1.5 cups),2707140,383,closest
+lobster_roll_sandwich,1 roll,2706825,120,composite
+lobster_roll_sandwich,1 roll,2707656,45,composite
+lobster_roll_sandwich,1 roll,2710154,7,composite
+macaroni_and_cheese,1 cup,2708811,230,exact
+macarons,3 macarons,2707900,60,closest
+miso_soup,1 bowl,2707455,245,exact
+mussels,1 bowl with butter,2706350,150,composite
+mussels,1 bowl with butter,2710154,14,composite
+nachos,1 order,2708576,250,exact
+omelette,3-egg omelette with cheese,2707208,195,exact
+onion_rings,1 order,2710055,120,exact
+oysters,6 oysters,2706351,90,exact
+pad_thai,1 plate (2 cups),2708804,400,exact
+paella,1 plate,2706711,300,exact
+pancakes,Stack of 3,2708294,150,exact
+panna_cotta,1 ramekin,2705698,130,closest
+peking_duck,1 cup sliced,2706141,140,exact
+pho,1 bowl (3 cups),2707124,735,exact
+pizza,2 slices,2708616,172,exact
+pork_chop,1 chop,2705866,120,exact
+poutine,1 order,2709469,260,composite
+poutine,1 order,2707149,120,composite
+prime_rib,1 cut,2705828,240,closest
+pulled_pork_sandwich,1 sandwich,2706975,180,exact
+ramen,1 bowl (3 cups),2709158,735,exact
+ravioli,1 cup with sauce,2708768,250,exact
+red_velvet_cake,1 slice,2707884,200,exact
+risotto,1 plate (1.5 cups),2709094,306,closest
+samosa,2 samosas,2708730,150,exact
+sashimi,About 8 slices,2706223,120,closest
+scallops,6 scallops,2706357,90,exact
+seaweed_salad,1 cup,2710100,100,composite
+seaweed_salad,1 cup,2710190,5,composite
+shrimp_and_grits,1 bowl,2708369,240,composite
+shrimp_and_grits,1 bowl,2706362,90,composite
+spaghetti_bolognese,1 plate (1.5 cups),2708837,375,exact
+spaghetti_carbonara,1 plate (1.5 cups),2708861,375,closest
+spring_rolls,2 rolls,2708702,128,exact
+steak,1 steak,2705824,160,exact
+strawberry_shortcake,1 slice,2707896,175,exact
+sushi,8 pieces,2708959,240,exact
+tacos,2 tacos,2708514,210,exact
+takoyaki,6 balls,2708294,120,composite
+takoyaki,6 balls,2706331,20,composite
+takoyaki,6 balls,2710204,14,composite
+tiramisu,1 slice,2705702,175,exact
+tuna_tartare,1 portion,2706223,110,composite
+tuna_tartare,1 portion,2709223,30,composite
+tuna_tartare,1 portion,2710190,5,composite
+waffles,1 Belgian waffle,2708325,135,exact
