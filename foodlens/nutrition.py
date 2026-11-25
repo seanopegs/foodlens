@@ -25,19 +25,23 @@ def load_table(path: str | None = None) -> dict:
 
 
 def estimate(dish: str, portion: float = 1.0, extras: dict[str, int] | None = None,
-             extra_kcal: float = 0.0, table: dict | None = None) -> dict[str, float]:
-    """Nutrients for ``portion`` x the typical serving of ``dish`` plus extras.
+             extra_kcal: float = 0.0, drink: str | None = None,
+             table: dict | None = None) -> dict[str, float]:
+    """Nutrients for ``portion`` x the typical serving of ``dish`` plus extras and a drink.
 
     ``extras`` maps add-on keys (see nutrition.json) to how many units were added.
     ``extra_kcal`` covers anything else the user adds; it only changes calories.
+    ``drink`` is a key of the drinks table; one serving is added.
     """
     table = table or load_table()
     base = table["dishes"][dish]["per_serving"]
     total = {k: base[k] * portion for k in NUTRIENTS}
-    for key, count in (extras or {}).items():
-        unit = table["addons"][key]["per_unit"]
+    parts = [(table["addons"][key]["per_unit"], count) for key, count in (extras or {}).items()]
+    if drink:
+        parts.append((table["drinks"][drink]["per_serving"], 1))
+    for values, count in parts:
         for k in NUTRIENTS:
-            total[k] += unit[k] * count
+            total[k] += values[k] * count
     total["kcal"] += extra_kcal
     return total
 

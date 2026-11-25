@@ -6,7 +6,8 @@ Usage:
 Download the "Survey (FNDDS)" CSV release from https://fdc.nal.usda.gov/download-datasets
 (we used FoodData_Central_survey_food_csv_2024-10-31, i.e. FNDDS 2021-2023) and unzip it.
 servings.csv maps every Food-101 class to one or more FNDDS foods with a gram weight for a
-typical serving; addons.csv lists the extras a user can add in the app.
+typical serving; addons.csv lists the extras a user can add in the app and drinks.csv the
+drinks they can add to the meal (Food-101 has no drink classes, so drinks are picked by hand).
 """
 from __future__ import annotations
 
@@ -43,7 +44,8 @@ def main(fndds_dir: str) -> None:
 
     servings = read_csv(HERE / "servings.csv")
     addons = read_csv(HERE / "addons.csv")
-    needed = {r["fdc_id"] for r in servings + addons}
+    drink_rows = read_csv(HERE / "drinks.csv")
+    needed = {r["fdc_id"] for r in servings + addons + drink_rows}
 
     per_100g: dict[str, dict[str, float]] = defaultdict(dict)
     with open(src / "food_nutrient.csv", encoding="utf-8") as f:
@@ -81,10 +83,22 @@ def main(fndds_dir: str) -> None:
             "per_unit": amount(r["fdc_id"], grams),
         }
 
+    drinks: dict[str, dict] = {}
+    for r in drink_rows:
+        drink = drinks.setdefault(r["key"], {
+            "label": r["label"], "serving": r["serving"], "grams": 0.0, "based_on": [],
+            "per_serving": dict.fromkeys(NUTRIENTS, 0.0),
+        })
+        grams = float(r["grams"])
+        drink["grams"] += grams
+        drink["based_on"].append(f'{names[r["fdc_id"]]} ({grams:g} g, FDC {r["fdc_id"]})')
+        for k, v in amount(r["fdc_id"], grams).items():
+            drink["per_serving"][k] += v
+
     def rounded(d: dict) -> dict:
         return {k: round(v, 1) for k, v in d.items()}
 
-    for d in dishes.values():
+    for d in [*dishes.values(), *drinks.values()]:
         d["grams"] = round(d["grams"])
         d["per_serving"] = rounded(d["per_serving"])
     for e in extras.values():
@@ -95,9 +109,10 @@ def main(fndds_dir: str) -> None:
                   "FoodData Central survey foods release 2024-10-31",
         "dishes": dict(sorted(dishes.items())),
         "addons": extras,
+        "drinks": drinks,
     }
     OUT.write_text(json.dumps(out, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
-    print(f"wrote {OUT} ({len(dishes)} dishes, {len(extras)} add-ons)")
+    print(f"wrote {OUT} ({len(dishes)} dishes, {len(extras)} add-ons, {len(drinks)} drinks)")
 
 
 if __name__ == "__main__":

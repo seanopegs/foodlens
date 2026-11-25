@@ -1878,5 +1878,195 @@
     "sodium_mg": 6.3
    }
   }
+ },
+ "drinks": {
+  "water": {
+   "label": "Water",
+   "serving": "1 glass (360 ml)",
+   "grams": 360,
+   "based_on": [
+    "Water, bottled, plain (360 g, FDC 2710708)"
+   ],
+   "per_serving": {
+    "kcal": 0.0,
+    "protein_g": 0.0,
+    "carbs_g": 0.0,
+    "fat_g": 0.0,
+    "fiber_g": 0.0,
+    "sugar_g": 0.0,
+    "sodium_mg": 7.2
+   }
+  },
+  "sweet_iced_tea": {
+   "label": "Sweet iced tea",
+   "serving": "1 glass (360 ml)",
+   "grams": 385,
+   "based_on": [
+    "Tea, iced, brewed, black, unsweetened (360 g, FDC 2710517)",
+    "Sugar, white, granulated or lump (25 g, FDC 2710258)"
+   ],
+   "per_serving": {
+    "kcal": 103.8,
+    "protein_g": 0.0,
+    "carbs_g": 26.0,
+    "fat_g": 0.1,
+    "fiber_g": 0.0,
+    "sugar_g": 24.9,
+    "sodium_mg": 11.1
+   }
+  },
+  "iced_tea": {
+   "label": "Unsweetened tea",
+   "serving": "1 glass (360 ml)",
+   "grams": 360,
+   "based_on": [
+    "Tea, iced, brewed, black, unsweetened (360 g, FDC 2710517)"
+   ],
+   "per_serving": {
+    "kcal": 3.6,
+    "protein_g": 0.0,
+    "carbs_g": 1.1,
+    "fat_g": 0.0,
+    "fiber_g": 0.0,
+    "sugar_g": 0.0,
+    "sodium_mg": 10.8
+   }
+  },
+  "tea_with_milk": {
+   "label": "Sweet milk tea",
+   "serving": "1 glass (360 ml)",
+   "grams": 360,
+   "based_on": [
+    "Tea, hot, with milk (360 g, FDC 2710506)"
+   ],
+   "per_serving": {
+    "kcal": 183.6,
+    "protein_g": 5.7,
+    "carbs_g": 32.2,
+    "fat_g": 3.8,
+    "fiber_g": 0.4,
+    "sugar_g": 31.4,
+    "sodium_mg": 72.0
+   }
+  },
+  "black_coffee": {
+   "label": "Black coffee",
+   "serving": "1 cup (240 ml)",
+   "grams": 240,
+   "based_on": [
+    "Coffee, brewed (240 g, FDC 2710375)"
+   ],
+   "per_serving": {
+    "kcal": 2.4,
+    "protein_g": 0.3,
+    "carbs_g": 0.0,
+    "fat_g": 0.0,
+    "fiber_g": 0.0,
+    "sugar_g": 0.0,
+    "sodium_mg": 4.8
+   }
+  },
+  "iced_latte": {
+   "label": "Iced latte",
+   "serving": "1 glass (360 ml)",
+   "grams": 360,
+   "based_on": [
+    "Coffee, Iced Latte (360 g, FDC 2710431)"
+   ],
+   "per_serving": {
+    "kcal": 97.2,
+    "protein_g": 6.3,
+    "carbs_g": 10.1,
+    "fat_g": 3.6,
+    "fiber_g": 0.0,
+    "sugar_g": 9.0,
+    "sodium_mg": 82.8
+   }
+  },
+  "cola": {
+   "label": "Cola",
+   "serving": "1 can (355 ml)",
+   "grams": 372,
+   "based_on": [
+    "Soft drink, cola (372 g, FDC 2710541)"
+   ],
+   "per_serving": {
+    "kcal": 156.2,
+    "protein_g": 0.0,
+    "carbs_g": 38.5,
+    "fat_g": 0.9,
+    "fiber_g": 0.0,
+    "sugar_g": 37.0,
+    "sodium_mg": 11.2
+   }
+  },
+  "orange_juice": {
+   "label": "Orange juice",
+   "serving": "1 glass (250 ml)",
+   "grams": 248,
+   "based_on": [
+    "Orange juice, 100%, NFS (248 g, FDC 2709186)"
+   ],
+   "per_serving": {
+    "kcal": 116.6,
+    "protein_g": 1.9,
+    "carbs_g": 25.2,
+    "fat_g": 0.8,
+    "fiber_g": 0.7,
+    "sugar_g": 20.3,
+    "sodium_mg": 5.0
+   }
+  },
+  "fruit_smoothie": {
+   "label": "Fruit smoothie",
+   "serving": "1 glass (320 ml)",
+   "grams": 324,
+   "based_on": [
+    "Fruit smoothie, NFS (324 g, FDC 2705513)"
+   ],
+   "per_serving": {
+    "kcal": 213.8,
+    "protein_g": 7.5,
+    "carbs_g": 38.8,
+    "fat_g": 3.6,
+    "fiber_g": 3.6,
+    "sugar_g": 28.9,
+    "sodium_mg": 90.7
+   }
+  },
+  "chocolate_milk": {
+   "label": "Chocolate milk",
+   "serving": "1 glass (250 ml)",
+   "grams": 248,
+   "based_on": [
+    "Chocolate milk, NFS (248 g, FDC 2705466)"
+   ],
+   "per_serving": {
+    "kcal": 161.2,
+    "protein_g": 8.5,
+    "carbs_g": 27.2,
+    "fat_g": 2.1,
+    "fiber_g": 0.2,
+    "sugar_g": 23.7,
+    "sodium_mg": 168.6
+   }
+  },
+  "coconut_water": {
+   "label": "Coconut water",
+   "serving": "1 coconut",
+   "grams": 206,
+   "based_on": [
+    "Coconut water, unsweetened (206 g, FDC 2707572)"
+   ],
+   "per_serving": {
+    "kcal": 37.1,
+    "protein_g": 0.5,
+    "carbs_g": 8.7,
+    "fat_g": 0.0,
+    "fiber_g": 0.0,
+    "sugar_g": 8.1,
+    "sodium_mg": 53.6
+   }
+  }
  }
 }

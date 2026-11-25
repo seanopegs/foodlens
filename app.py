@@ -227,14 +227,20 @@ if upload is not None:
                         counts[key] = st.number_input(f"{addons[key]['label']} ({addons[key]['unit']})",
                                                       min_value=1, max_value=10, value=1, step=1,
                                                       key=f"n-{key}-{photo}")
+            drinks = table.get("drinks", {})
+            drink = st.selectbox("Drink", [None, *drinks], key=f"drink-{photo}",
+                                 format_func=lambda k: "No drink" if k is None
+                                 else f"{drinks[k]['label']} · {drinks[k]['serving']}")
             factor = PORTIONS[portion]
-            total = estimate(dish, factor, counts, extra_kcal, table)
+            total = estimate(dish, portion=factor, extras=counts, extra_kcal=extra_kcal, drink=drink, table=table)
             # on phones the panel sits above the controls, so repeat the total here
             st.markdown(f'<div class="fl-total-m"><span>Calories</span>'
                         f'<b>{round(total["kcal"], -1):,.0f}</b></div>', unsafe_allow_html=True)
         added = [f"{addons[k]['label'].lower()} ×{n}" for k, n in counts.items()]
         if extra_kcal:
             added.append(f"{extra_kcal} kcal more")
+        if drink:
+            added.append(f"{drinks[drink]['label'].lower()} — {drinks[drink]['serving']}")
         panel.markdown(nutrition_html(dish, factor, total, table, added), unsafe_allow_html=True)
 
     with st.expander("Details"):
@@ -255,8 +261,10 @@ if upload is not None:
                              "Confidence": percent(p), "Time (ms)": round(ms)})
             st.dataframe(rows, hide_index=True)
         if dishes:
-            info = table["dishes"][dish]
-            st.caption("Nutrition based on " + "; ".join(info["based_on"]) + f" ({table['source']}).")
+            sources = list(table["dishes"][dish]["based_on"])
+            if drink:
+                sources += table["drinks"][drink]["based_on"]
+            st.caption("Nutrition based on " + "; ".join(sources) + f" ({table['source']}).")
 
 st.markdown(f'<div class="fl-foot">Recognises {len(class_names)} dishes from the Food-101 dataset.</div>',
             unsafe_allow_html=True)

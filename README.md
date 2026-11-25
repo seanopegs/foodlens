@@ -25,6 +25,7 @@ foodlens/nutrition.py        nutrition estimate: portion size and extras
 foodlens/nutrition.json      nutrients per typical serving of each dish (generated)
 nutrition/servings.csv       Food-101 class -> USDA FNDDS food(s) and serving weight
 nutrition/addons.csv         extras the user can add (oil, butter, cheese, egg, ...)
+nutrition/drinks.csv         drinks the user can add to the meal
 nutrition/build_nutrition.py builds nutrition.json from the FNDDS tables
 app.py                       Streamlit web app
 .streamlit/config.toml       app theme
@@ -34,7 +35,7 @@ app.py                       Streamlit web app
 
 Every dish is mapped to the closest food(s) in the USDA Food and Nutrient Database for Dietary Studies (FNDDS 2021–2023) together with the weight of a typical serving, for example ramen → *Ramen bowl with meat and egg*, 3 cups (735 g). Dishes FNDDS does not list as a whole are built from their parts (fish and chips = fried fish + french fries). The `match` column in `nutrition/servings.csv` marks each mapping as `exact`, `closest` or `composite`.
 
-In the app the user can correct the dish if the prediction is wrong, choose a smaller or larger portion (×0.7 / ×1.4), and add extras such as oil in the broth, an egg or extra rice; anything else can be entered as extra calories. The numbers are estimates for a typical serving, not a measurement of the photo.
+In the app the user can correct the dish if the prediction is wrong, choose a smaller or larger portion (×0.7 / ×1.4), add extras such as oil in the broth, an egg or extra rice, and add a drink (Food-101 has no drink classes, so drinks are picked from a list in `nutrition/drinks.csv`); anything else can be entered as extra calories. The numbers are estimates for a typical serving, not a measurement of the photo.
 
 To rebuild `nutrition.json`, download the FNDDS CSV release from [FoodData Central](https://fdc.nal.usda.gov/download-datasets) (we used `FoodData_Central_survey_food_csv_2024-10-31`) and run:
 
