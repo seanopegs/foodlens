@@ -13,6 +13,8 @@ from pathlib import Path
 NUTRIENTS = ("kcal", "protein_g", "carbs_g", "fat_g", "fiber_g", "sugar_g", "sodium_mg")
 PORTIONS = {"Small": 0.7, "Regular": 1.0, "Large": 1.4}
 DAILY_KCAL = 2000
+# US FDA Daily Values for a 2,000 kcal diet (used for the % Daily Value column)
+DAILY_VALUES = {"fat_g": 78, "sodium_mg": 2300, "carbs_g": 275, "fiber_g": 28, "protein_g": 50}
 TABLE_PATH = Path(__file__).with_name("nutrition.json")
 
 
@@ -40,8 +42,6 @@ def estimate(dish: str, portion: float = 1.0, extras: dict[str, int] | None = No
     return total
 
 
-def energy_split(total: dict[str, float]) -> dict[str, float]:
-    """Share of calories from protein, carbs and fat (4 / 4 / 9 kcal per gram)."""
-    kcal = {"protein": 4 * total["protein_g"], "carbs": 4 * total["carbs_g"], "fat": 9 * total["fat_g"]}
-    s = sum(kcal.values()) or 1.0
-    return {k: v / s for k, v in kcal.items()}
+def daily_value(total: dict[str, float], key: str) -> float | None:
+    """Share of the FDA Daily Value, or None when the nutrient has none."""
+    return total[key] / DAILY_VALUES[key] if key in DAILY_VALUES else None

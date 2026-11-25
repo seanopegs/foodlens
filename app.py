@@ -17,66 +17,72 @@ from PIL import Image, ImageOps, UnidentifiedImageError
 
 from foodlens.data import build_transforms, pretty_label
 from foodlens.models import DISPLAY_NAMES, build_model
-from foodlens.nutrition import DAILY_KCAL, PORTIONS, energy_split, estimate, load_table
+from foodlens.nutrition import DAILY_KCAL, PORTIONS, daily_value, estimate, load_table
 
 CHECKPOINT_DIR = Path(os.environ.get("FOODLENS_CHECKPOINTS", Path(__file__).parent / "checkpoints"))
 DEFAULT_CHECKPOINT = "best.pt"
 SURE, LIKELY = 0.70, 0.40  # confidence bands shown to the user
 EVAL_TF = build_transforms(train=False)
-MACRO_COLORS = {"protein": "#8C4A3B", "carbs": "#D9A441", "fat": "#7A8B5C"}
 OTHER = "other"
+# rows of the nutrition panel: (key, label, unit, indented)
+PANEL_ROWS = [("fat_g", "Total Fat", "g", False), ("sodium_mg", "Sodium", "mg", False),
+              ("carbs_g", "Total Carbohydrate", "g", False), ("fiber_g", "Dietary Fiber", "g", True),
+              ("sugar_g", "Total Sugars", "g", True), ("protein_g", "Protein", "g", False)]
 
 st.set_page_config(page_title="FoodLens", page_icon=":material/restaurant:", layout="centered")
 
 st.markdown(
     """
     <style>
-    .block-container {padding-top: 3.5rem; max-width: 780px;}
-    .fl-title {font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 2.6rem;
-               letter-spacing: -0.015em; line-height: 1.05; color: #221E1A;}
-    .fl-sub {color: #6B6158; font-size: 1.05rem; margin: .4rem 0 1.5rem;}
+    .block-container {padding-top: 3rem; max-width: 820px;}
+    .fl-title {font-weight: 900; font-size: 3.1rem; letter-spacing: -0.04em; line-height: .95; color: #111;}
+    .fl-sub {color: #444; font-size: 1.05rem; margin-top: .55rem; padding-bottom: 1.1rem;
+             border-bottom: 10px solid #111; margin-bottom: 1.4rem;}
+    .fl-kicker {font-size: .75rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; color: #555;}
     .fl-result {margin-bottom: 1.25rem;}
-    .fl-kicker {color: #8A7F74; font-size: .8rem; letter-spacing: .06em; text-transform: uppercase;}
-    .fl-dish {font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 2.1rem;
-              line-height: 1.12; color: #221E1A; margin: .15rem 0 .4rem;}
-    .fl-note {color: #5E554D; margin-bottom: 1.1rem;}
-    .fl-row {display: flex; justify-content: space-between; gap: 1rem; font-size: .95rem;
-             margin-top: .7rem; color: #3A332D;}
-    .fl-row span:last-child {color: #8A7F74; font-variant-numeric: tabular-nums;}
-    .fl-bar {height: 6px; background: #ECE4D8; border-radius: 3px; margin-top: .3rem; overflow: hidden;}
-    .fl-bar i {display: block; height: 100%; background: #B5442C; border-radius: 3px;}
-    .fl-bar.alt i {background: #CDB9A5;}
-    .fl-section {display: flex; align-items: baseline; gap: .6rem; margin: 2rem 0 .9rem;
-                 padding-top: 1.4rem; border-top: 1px solid #E4DACB;}
-    .fl-h {font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 1.45rem; color: #221E1A;}
-    .fl-card {background: #F2ECE3; border-radius: 10px; padding: 1.2rem 1.25rem 1.1rem;}
-    .fl-kcal {font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 2.6rem;
-              line-height: 1; color: #221E1A; font-variant-numeric: tabular-nums;}
-    .fl-kcal span {font-family: inherit; font-size: 1rem; font-weight: 500; color: #6B6158; margin-left: .35rem;}
-    .fl-serving {color: #6B6158; font-size: .9rem; margin-top: .45rem;}
-    .fl-split {display: flex; height: 8px; border-radius: 4px; overflow: hidden; margin: 1.1rem 0 .85rem;
-               background: #E4DACB;}
-    .fl-split i {display: block; height: 100%;}
-    .fl-macros {display: grid; grid-template-columns: repeat(3, 1fr); gap: .5rem;}
-    .fl-lbl {font-size: .8rem; color: #6B6158; display: flex; align-items: center; gap: .4rem;}
-    .fl-lbl i {width: 8px; height: 8px; border-radius: 50%; display: inline-block;}
-    .fl-val {font-size: 1.2rem; font-weight: 600; color: #221E1A; font-variant-numeric: tabular-nums;}
-    .fl-micro {font-size: .85rem; color: #6B6158; margin-top: .9rem; padding-top: .75rem;
-               border-top: 1px solid #E4DACB; line-height: 1.6;}
-    .fl-fine {color: #8A7F74; font-size: .8rem; margin: .6rem 0 1.2rem;}
-    [data-testid="stButtonGroup"] > div {flex-wrap: wrap; overflow-x: visible; row-gap: .45rem;}
-    .fl-foot {color: #8A7F74; font-size: .85rem; margin-top: 2.5rem;}
-    .fl-list {columns: 3 10rem; font-size: .85rem; color: #3A332D; line-height: 1.6;}
-    [data-testid="stImage"] img {border-radius: 8px; width: 100%; max-height: 420px; object-fit: cover;}
+    .fl-dish {font-weight: 900; font-size: 2.6rem; letter-spacing: -0.035em; line-height: 1; color: #111;
+              margin: .25rem 0 .55rem;}
+    .fl-note {color: #333; margin-bottom: .9rem;}
+    .fl-row {display: flex; justify-content: space-between; gap: 1rem; font-size: .95rem; font-weight: 600;
+             color: #111; margin-top: .55rem; padding-top: .45rem; border-top: 1px solid #111;}
+    .fl-row span:last-child {font-variant-numeric: tabular-nums;}
+    .fl-bar {height: 10px; background: #ECECE8; margin-top: .35rem;}
+    .fl-bar i {display: block; height: 100%; background: #D62718;}
+    .fl-bar.alt i {background: #A3A39C;}
+    .fl-gap {height: .6rem; border-top: 1px solid #111; margin-top: 1.6rem;}
+    .nf {border: 1px solid #111; padding: .3rem .6rem .55rem; color: #111; background: #fff; margin-bottom: 1.2rem;}
+    .nf-h {font-weight: 900; font-size: 2.2rem; letter-spacing: -0.03em; line-height: 1.05;}
+    .nf-dish {font-size: .95rem; padding: .15rem 0 .1rem;}
+    .nf-serv {display: flex; justify-content: space-between; gap: .75rem; font-weight: 800; font-size: 1rem;}
+    .nf-serv span:last-child {text-align: right;}
+    .nf-incl {font-size: .82rem; color: #333; padding-top: .15rem;}
+    .nf-thick {height: 10px; background: #111; margin: .35rem 0 .25rem;}
+    .nf-med {height: 5px; background: #111; margin: .3rem 0 .2rem;}
+    .nf-amt {font-size: .78rem; font-weight: 800;}
+    .nf-cal {display: flex; justify-content: space-between; align-items: baseline; font-weight: 900;}
+    .nf-cal span {font-size: 1.75rem; letter-spacing: -0.02em;}
+    .nf-cal b {font-size: 2.7rem; letter-spacing: -0.03em; font-variant-numeric: tabular-nums;}
+    .nf-dvh {text-align: right; font-size: .78rem; font-weight: 800; padding-bottom: .2rem;
+             border-bottom: 1px solid #111;}
+    .nf-row {display: flex; justify-content: space-between; font-size: .93rem; padding: .22rem 0;
+             border-bottom: 1px solid #111; font-variant-numeric: tabular-nums;}
+    .nf-row.sub {padding-left: 1.1rem;}
+    .nf-row b {font-weight: 800;}
+    .nf-row .dv {font-weight: 800;}
+    .nf-foot {font-size: .74rem; line-height: 1.4; margin-top: .45rem;}
     .fl-total-m {display: none;}
+    .fl-foot {color: #555; font-size: .85rem; margin-top: 2.5rem; padding-top: .6rem; border-top: 1px solid #111;}
+    .fl-list {columns: 3 10rem; font-size: .85rem; color: #111; line-height: 1.6;}
+    [data-testid="stImage"] img {border: 1px solid #111; max-height: 420px; object-fit: cover;}
+    [data-testid="stButtonGroup"] > div {flex-wrap: wrap; overflow-x: visible; row-gap: .45rem;}
     @media (max-width: 640px) {
       .block-container {padding-top: 2rem;}
-      .fl-title {font-size: 2.2rem;}
+      .fl-title {font-size: 2.5rem;}
+      .fl-dish {font-size: 2.2rem;}
       [data-testid="stImage"] img {max-height: 240px;}
-      .fl-fine {margin-bottom: 0;}
-      .fl-total-m {display: block; background: #F2ECE3; border-radius: 8px; padding: .6rem .9rem;
-                   color: #6B6158; margin-top: .25rem;}
-      .fl-total-m b {font-family: 'Fraunces', Georgia, serif; color: #221E1A; font-size: 1.15rem; margin-left: .3rem;}
+      .fl-total-m {display: flex; justify-content: space-between; align-items: baseline; font-weight: 900;
+                   border-top: 10px solid #111; padding-top: .35rem; margin-top: .3rem;}
+      .fl-total-m span {font-size: 1.3rem;} .fl-total-m b {font-size: 1.8rem; letter-spacing: -0.03em;}
     }
     </style>
     """,
@@ -140,24 +146,27 @@ def result_html(top, class_names) -> str:
             f'<div class="fl-note">{note}</div>{bars}</div>')
 
 
-def nutrition_html(dish: str, factor: float, total: dict, table: dict) -> str:
+def nutrition_html(dish: str, factor: float, total: dict, table: dict, added: list[str]) -> str:
     info = table["dishes"][dish]
-    serving = f"{pretty_label(dish)} · {info['serving'].lower()}"
-    if factor != 1:
-        serving += f" × {factor:g}"
-    serving += f", about {info['grams'] * factor:,.0f} g"
-    split = energy_split(total)
-    bars = "".join(f'<i style="width:{split[k] * 100:.1f}%;background:{c}"></i>' for k, c in MACRO_COLORS.items())
-    macros = "".join(
-        f'<div><div class="fl-lbl"><i style="background:{MACRO_COLORS[k]}"></i>{k.capitalize()}</div>'
-        f'<div class="fl-val">{total[k + "_g"]:.0f} g</div></div>' for k in MACRO_COLORS)
-    day = total["kcal"] / DAILY_KCAL
-    return (f'<div class="fl-card"><div class="fl-kcal">{round(total["kcal"], -1):,.0f}<span>kcal</span></div>'
-            f'<div class="fl-serving">{html.escape(serving)}</div>'
-            f'<div class="fl-split">{bars}</div><div class="fl-macros">{macros}</div>'
-            f'<div class="fl-micro">Fiber {total["fiber_g"]:.0f} g · Sugar {total["sugar_g"]:.0f} g · '
-            f'Sodium {round(total["sodium_mg"], -1):,.0f} mg<br>About {day:.0%} of a {DAILY_KCAL:,} kcal day</div></div>'
-            f'<div class="fl-fine">Estimated from USDA food data for a typical serving. Real meals vary.</div>')
+    serving = info["serving"] + (f" × {factor:g}" if factor != 1 else "")
+    grams = f"{info['grams'] * factor:,.0f} g"
+    included = f'<div class="nf-incl">Includes {html.escape(", ".join(added))}</div>' if added else ""
+    rows = []
+    for key, label, unit, sub in PANEL_ROWS:
+        amount = f"{round(total[key], -1):,.0f}{unit}" if unit == "mg" else f"{total[key]:.0f}{unit}"
+        dv = daily_value(total, key) if key != "protein_g" else None
+        name = html.escape(label) if sub else f"<b>{html.escape(label)}</b>"
+        rows.append(f'<div class="nf-row{" sub" if sub else ""}"><span>{name} {amount}</span>'
+                    f'<span class="dv">{f"{dv:.0%}" if dv is not None else ""}</span></div>')
+    return (f'<div class="nf"><div class="nf-h">Nutrition Facts</div>'
+            f'<div class="nf-dish">{html.escape(pretty_label(dish))}, estimated</div>'
+            f'<div class="nf-serv"><span>Serving size</span><span>{html.escape(serving)} ({grams})</span></div>'
+            f'{included}<div class="nf-thick"></div><div class="nf-amt">Amount per serving</div>'
+            f'<div class="nf-cal"><span>Calories</span><b>{round(total["kcal"], -1):,.0f}</b></div>'
+            f'<div class="nf-med"></div><div class="nf-dvh">% Daily Value*</div>{"".join(rows)}'
+            f'<div class="nf-thick"></div>'
+            f'<div class="nf-foot">* Based on a {DAILY_KCAL:,}-calorie day. Estimated from USDA food data '
+            f'for a typical serving; real meals vary.</div></div>')
 
 
 st.markdown('<div class="fl-title">FoodLens</div>'
@@ -189,15 +198,14 @@ if upload is not None:
 
     top, elapsed_ms = predict(image_bytes, model_path)
     left, right = st.columns(2, gap="large")
-    left.image(image)
+    left.image(image, width="stretch")
     right.markdown(result_html(top, class_names), unsafe_allow_html=True)
 
     predicted = class_names[top[0][0]]
     dishes = sorted((d for d in class_names if d in table["dishes"]), key=pretty_label)
     if dishes:
-        st.markdown('<div class="fl-section"><span class="fl-h">Nutrition</span>'
-                    '<span class="fl-kicker">estimate</span></div>', unsafe_allow_html=True)
-        card, adjust = st.columns(2, gap="large")
+        st.markdown('<div class="fl-gap"></div>', unsafe_allow_html=True)
+        panel, adjust = st.columns(2, gap="large")
         photo = upload.file_id  # widgets reset for every new photo
         addons = table["addons"]
         with adjust:
@@ -221,10 +229,13 @@ if upload is not None:
                                                       key=f"n-{key}-{photo}")
             factor = PORTIONS[portion]
             total = estimate(dish, factor, counts, extra_kcal, table)
-            # on phones the card sits above the controls, so repeat the total here
-            st.markdown(f'<div class="fl-total-m">Total <b>{round(total["kcal"], -1):,.0f} kcal</b></div>',
-                        unsafe_allow_html=True)
-        card.markdown(nutrition_html(dish, factor, total, table), unsafe_allow_html=True)
+            # on phones the panel sits above the controls, so repeat the total here
+            st.markdown(f'<div class="fl-total-m"><span>Calories</span>'
+                        f'<b>{round(total["kcal"], -1):,.0f}</b></div>', unsafe_allow_html=True)
+        added = [f"{addons[k]['label'].lower()} ×{n}" for k, n in counts.items()]
+        if extra_kcal:
+            added.append(f"{extra_kcal} kcal more")
+        panel.markdown(nutrition_html(dish, factor, total, table, added), unsafe_allow_html=True)
 
     with st.expander("Details"):
         labels = {p: load_checkpoint(p)[2] for p in checkpoints}
