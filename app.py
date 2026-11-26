@@ -75,6 +75,14 @@ st.markdown(
     .fl-list {columns: 3 10rem; font-size: .85rem; color: #111; line-height: 1.6;}
     [data-testid="stImage"] img {border: 1px solid #111; max-height: 420px; object-fit: cover;}
     [data-testid="stButtonGroup"] > div {flex-wrap: wrap; overflow-x: visible; row-gap: .45rem;}
+    #fl-drop {position: fixed; inset: 0; z-index: 999999; display: none; align-items: center;
+              justify-content: center; background: rgba(255, 255, 255, .92); border: 10px solid #111;
+              pointer-events: none;}
+    #fl-drop.on {display: flex;}
+    #fl-drop span {font-weight: 900; font-size: 2.6rem; letter-spacing: -0.03em; color: #111;}
+    #fl-msg {position: fixed; left: 50%; bottom: 1.5rem; transform: translateX(-50%); z-index: 999999;
+             display: none; background: #111; color: #fff; padding: .6rem 1rem; font-size: .9rem;}
+    #fl-msg.on {display: block;}
     @media (max-width: 640px) {
       .block-container {padding-top: 2rem;}
       .fl-title {font-size: 2.5rem;}
@@ -88,6 +96,133 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
+# Lets people drop a photo anywhere on the page or paste one with Ctrl+V. Both end up in the
+# normal file uploader, so the rest of the app does not need to know where the photo came from.
+# Keep tags out of the script text: Streamlit's HTML sanitiser drops a script that contains them.
+DROP_AND_PASTE_JS = """
+<script>
+(() => {
+  if (window.flDropPaste) return;
+  window.flDropPaste = true;
+  const ACCEPTED = ["image/jpeg", "image/png", "image/webp"];
+  const ZONE = '[data-testid="stFileUploaderDropzone"]';
+
+  const overlay = document.createElement("div");
+  overlay.id = "fl-drop";
+  const label = document.createElement("span");
+  label.textContent = "Drop the photo";
+  overlay.append(label);
+  const msg = document.createElement("div");
+  msg.id = "fl-msg";
+  document.body.append(overlay, msg);
+  let msgTimer;
+  const say = text => {
+    msg.textContent = text;
+    msg.classList.add("on");
+    clearTimeout(msgTimer);
+    msgTimer = setTimeout(() => msg.classList.remove("on"), 4000);
+  };
+
+  // GIF, BMP, AVIF and other formats the browser can open are redrawn as PNG.
+  async function toAccepted(file, name) {
+    if (ACCEPTED.includes(file.type)) return new File([file], name, {type: file.type});
+    const bitmap = await createImageBitmap(file);
+    const canvas = document.createElement("canvas");
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+    canvas.getContext("2d").drawImage(bitmap, 0, 0);
+    const png = await new Promise(done => canvas.toBlob(done, "image/png"));
+    return new File([png], name.replace(/\\.[^.]*$/, "") + ".png", {type: "image/png"});
+  }
+
+  async function send(file, name) {
+    const input = document.querySelector(ZONE + " input[type=file]");
+    if (!input) return;
+    let photo;
+    try {
+      photo = await toAccepted(file, name || file.name || "photo.png");
+    } catch (err) {
+      say("That file is not a photo FoodLens can open. Try a JPG or PNG.");
+      return;
+    }
+    const files = new DataTransfer();
+    files.items.add(photo);
+    input.files = files.files;
+    input.dispatchEvent(new Event("change", {bubbles: true}));
+    window.scrollTo({top: 0, behavior: "smooth"});
+  }
+
+  function imageIn(data) {
+    if (!data) return null;
+    for (const file of data.files || []) if (file.type.startsWith("image/")) return file;
+    for (const item of data.items || [])
+      if (item.kind === "file" && item.type.startsWith("image/")) return item.getAsFile();
+    return null;
+  }
+
+  // An image dragged or copied from another web page often comes only as its address.
+  async function sendFromUrl(url) {
+    try {
+      const response = await fetch(url, {mode: "cors"});
+      const blob = await response.blob();
+      if (!response.ok || !blob.type.startsWith("image/")) throw new Error("not an image");
+      const name = decodeURIComponent(new URL(url).pathname.split("/").pop() || "photo");
+      await send(blob, name);
+    } catch (err) {
+      say("Couldn't load that image from the other site. Save it first, then drop the file here.");
+    }
+  }
+  const urlIn = data => {
+    const text = (data.getData("text/uri-list") || data.getData("text/plain") || "").trim().split("\\n")[0];
+    return /^https?:\\/\\/\\S+$/i.test(text) ? text : null;
+  };
+  const typing = el => el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName));
+
+  window.addEventListener("paste", event => {
+    const file = imageIn(event.clipboardData);
+    if (file) {
+      event.preventDefault();
+      send(file, file.name && file.name !== "image.png" ? file.name : "pasted-photo.png");
+      return;
+    }
+    const url = !typing(document.activeElement) && urlIn(event.clipboardData);
+    if (url) {
+      event.preventDefault();
+      sendFromUrl(url);
+    }
+  });
+
+  const carriesFiles = event => [...(event.dataTransfer?.types || [])].some(t => t === "Files" || t === "text/uri-list");
+  let depth = 0;
+  window.addEventListener("dragenter", event => {
+    if (!carriesFiles(event)) return;
+    depth += 1;
+    overlay.classList.add("on");
+  });
+  window.addEventListener("dragleave", event => {
+    if (!carriesFiles(event)) return;
+    depth -= 1;
+    if (depth <= 0) { depth = 0; overlay.classList.remove("on"); }
+  });
+  window.addEventListener("dragover", event => { if (carriesFiles(event)) event.preventDefault(); });
+  window.addEventListener("drop", event => {
+    depth = 0;
+    overlay.classList.remove("on");
+    if (!carriesFiles(event)) return;
+    event.preventDefault();
+    const file = imageIn(event.dataTransfer);
+    const onUploader = event.target.closest && event.target.closest(ZONE);
+    if (file) {
+      if (!onUploader) send(file);  // the uploader handles drops on itself
+      return;
+    }
+    const url = urlIn(event.dataTransfer);
+    if (url) sendFromUrl(url);
+  });
+})();
+</script>
+"""
 
 
 @st.cache_resource(show_spinner=False)
@@ -172,7 +307,8 @@ def nutrition_html(dish: str, factor: float, total: dict, table: dict, added: li
 
 
 st.markdown('<div class="fl-title">FoodLens</div>'
-            '<div class="fl-sub">Upload a photo of a dish to see what it is and roughly what\'s in it.</div>',
+            '<div class="fl-sub">Drop, paste or upload a photo of a dish to see what it is and roughly '
+            'what\'s in it.</div>',
             unsafe_allow_html=True)
 
 checkpoints = sorted(str(p) for p in CHECKPOINT_DIR.glob("*.pt"))
@@ -186,6 +322,7 @@ if st.session_state.get("model_path") not in checkpoints:
 
 upload = st.file_uploader("Food photo", type=["jpg", "jpeg", "png", "webp"],
                           label_visibility="collapsed")
+st.html(DROP_AND_PASTE_JS, unsafe_allow_javascript=True)
 model_path = st.session_state["model_path"]
 _, class_names, model_label = load_checkpoint(model_path)
 table = load_table()
@@ -242,7 +379,7 @@ if upload is not None:
         if extra_kcal:
             added.append(f"{extra_kcal} kcal more")
         if drink:
-            added.append(f"{drinks[drink]['label'].lower()} — {drinks[drink]['serving']}")
+            added.append(f"{drinks[drink]['label'].lower()} ({drinks[drink]['serving']})")
         panel.markdown(nutrition_html(dish, factor, total, table, added), unsafe_allow_html=True)
 
     with st.expander("Details"):
