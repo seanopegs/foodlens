@@ -122,7 +122,9 @@ def predict(image_bytes: bytes, model_path: str, k: int = 5):
 
 
 def percent(p: float) -> str:
-    return "<1%" if p < 0.01 else f"{p:.0%}"
+    if p < 0.01:
+        return "<1%"
+    return ">99%" if p >= 0.995 else f"{p:.0%}"  # never claim 100% certainty
 
 
 def bar(name: str, p: float, alt: bool = False) -> str:

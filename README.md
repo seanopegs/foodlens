@@ -69,21 +69,34 @@ Every scenario changes one variable from the baseline and uses the same split. S
 
 Metrics: accuracy, top-5 accuracy, macro precision / recall / F1 on the test split, plus training time, parameter count and single-image inference time.
 
+## Results
+
+Trained on Kaggle (Tesla T4 GPU), one *Save & Run All* version, 4.4 hours for all five runs. Test split: 25,250 photos.
+
+| Run | Model | Test accuracy | Top-5 | Macro F1 | Best / last epoch | Training time | CPU time per photo |
+|---|---|---:|---:|---:|---:|---:|---:|
+| E4 | EfficientNet-B0 (ImageNet) | **81.7%** | 95.8% | 0.817 | 6 / 9 | 35 min | 29 ms |
+| E3 | MobileNetV2 (ImageNet) | 78.0% | 94.6% | 0.778 | 8 / 11 | 40 min | 22 ms |
+| Baseline | Custom CNN | 68.2% | 89.8% | 0.680 | 15 / 15 | 58 min | 40 ms |
+| E2 | Custom CNN, batch 16 | 67.8% | 89.3% | 0.676 | 15 / 15 | 62 min | 41 ms |
+| E1 | Custom CNN, learning rate 1e-4 | 62.9% | 87.0% | 0.624 | 14 / 15 | 59 min | 47 ms |
+
+The CNNs trained from scratch were still improving at epoch 15; the pretrained models overfit after their best epoch, which early stopping kept. The app uses E4 (`checkpoints/best.pt`).
+
 ## Running the experiments
 
-1. Open the notebook in Colab with the badge above and pick a GPU runtime (*Runtime → Change runtime type → T4 GPU*).
-2. Run the cells from the top. The first cell clones this repository; results and checkpoints are saved to Google Drive (`MyDrive/foodlens`).
-3. Choose which scenarios to train in `RUN_NOW`. Finished runs are skipped, so the rest can be trained in a later session.
+1. Open the notebook in Colab with the badge above and pick a GPU runtime (*Runtime → Change runtime type → T4 GPU*), or import it into a Kaggle notebook (*Settings → Accelerator → GPU*, *Internet on*) and use *Save Version → Save & Run All*, which keeps running with the browser closed.
+2. Run the cells from the top. The first cell clones this repository; results and checkpoints are saved to Google Drive (`MyDrive/foodlens`) on Colab and to `/kaggle/working/outputs` on Kaggle.
+3. Choose which scenarios to train in `RUN_NOW`. Finished runs are skipped, and an interrupted run continues from its last finished epoch.
 
 ## Running the app
 
 ```bash
 pip install -r requirements.txt
-mkdir checkpoints            # copy a trained .pt from MyDrive/foodlens/checkpoints here
 streamlit run app.py
 ```
 
-The app loads `checkpoints/best.pt` if it exists, otherwise the first checkpoint it finds. Checkpoints are ignored by git; to deploy the app, add the chosen one with `git add -f checkpoints/best.pt`.
+The trained EfficientNet-B0 (E4) is included as `checkpoints/best.pt`. Other checkpoints from the notebook can be copied into `checkpoints/` to compare models in the app's *Details* section.
 
 ## References
 
