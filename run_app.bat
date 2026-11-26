@@ -40,6 +40,15 @@ if not exist "checkpoints\best.pt" (
     exit /b 1
 )
 
+rem Skip Streamlit's one-time "Welcome to Streamlit" email question.
+if not exist "%USERPROFILE%\.streamlit\credentials.toml" (
+    if not exist "%USERPROFILE%\.streamlit" mkdir "%USERPROFILE%\.streamlit"
+    > "%USERPROFILE%\.streamlit\credentials.toml" (
+        echo [general]
+        echo email = ""
+    )
+)
+
 echo Starting FoodLens. Your browser opens at http://localhost:8501
 echo To stop the app, close this window or press Ctrl+C.
 echo.
