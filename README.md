@@ -28,6 +28,7 @@ nutrition/addons.csv         extras the user can add (oil, butter, cheese, egg, 
 nutrition/drinks.csv         drinks the user can add to the meal
 nutrition/build_nutrition.py builds nutrition.json from the FNDDS tables
 app.py                       Streamlit web app
+run_app.bat                  starts the app on Windows (installs the packages on first run)
 .streamlit/config.toml       app theme
 ```
 
@@ -91,9 +92,13 @@ The CNNs trained from scratch were still improving at epoch 15; the pretrained m
 
 ## Running the app
 
+On Windows, double-click `run_app.bat`. The first run installs the packages from `requirements.txt`; after that it starts the app and opens it in the browser at http://localhost:8501. Close the window to stop it.
+
+On any system:
+
 ```bash
 pip install -r requirements.txt
-streamlit run app.py
+python -m streamlit run app.py
 ```
 
 The trained EfficientNet-B0 (E4) is included as `checkpoints/best.pt`. Other checkpoints from the notebook can be copied into `checkpoints/` to compare models in the app's *Details* section.
